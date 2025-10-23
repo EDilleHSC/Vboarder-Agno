@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+agno>=2.1.10
+httpx
+psycopg2-binary
+sqlalchemy
+ollama
