@@ -2,19 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# 🩺 Add curl for healthcheck support
+# Install system dependencies
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# 🧠 Install Python dependencies
+# Copy requirements and install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 📦 Copy app code
+# Copy all app files
 COPY . .
+
+# ✅ REMOVED the problematic ../app_optimized.py copy
+# The app_optimized.py should already be in this directory
 
 EXPOSE 8000
 
-# 🚀 Start FastAPI (hot reload for dev)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-
-
+CMD ["uvicorn", "app_optimized:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

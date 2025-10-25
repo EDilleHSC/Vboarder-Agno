@@ -1,0 +1,62 @@
+[1mdiff --git a/.env b/.env[m
+[1mindex 24ca66f..c97c724 100644[m
+[1m--- a/.env[m
+[1m+++ b/.env[m
+[36m@@ -1,10 +1,52 @@[m
+[32m+[m[32m# ========================================[m
+[32m+[m[32m# 🗄️ DATABASE CONFIGURATION[m
+[32m+[m[32m# ========================================[m
+ DB_HOST=pgvector[m
+ DB_PORT=5432[m
+ DB_USER=ai[m
+[31m-DB_PASS=ai[m
+[32m+[m[32m# ⚠️ IMPORTANT: Change this in production! Use a strong password[m
+[32m+[m[32mDB_PASS=change-me-in-production[m
+ DB_DATABASE=ai[m
+[31m-DB_CONNECTION_URL=postgresql://ai:ai@pgvector:5432/ai[m
+[32m+[m[32mDB_CONNECTION_URL=postgresql://ai:change-me-in-production@pgvector:5432/ai[m
+ [m
+[32m+[m[32m# ========================================[m
+[32m+[m[32m# 🤖 OLLAMA CONFIGURATION[m
+[32m+[m[32m# ========================================[m
+ OLLAMA_HOST=http://ollama:11434[m
+[31m-IMAGE_NAME=agent-api[m
+[31m-IMAGE_TAG=latest[m
+[32m+[m[32mOLLAMA_PORT=11434[m
+[32m+[m[32mOLLAMA_MODEL=mistral:latest[m
+[32m+[m[32m# Model alternatives: llama2, neural-chat, dolphin-mixtral, etc.[m
+[32m+[m[32mOLLAMA_KEEP_ALIVE=4h[m
+[32m+[m[32mOLLAMA_NUM_PARALLEL=2[m
+[32m+[m[32mOLLAMA_NUM_CTX=4096[m
+[32m+[m[32mOLLAMA_NUM_THREADS=4[m
+[32m+[m
+[32m+[m[32m# ========================================[m
+[32m+[m[32m# 🚀 API CONFIGURATION[m
+[32m+[m[32m# ========================================[m
+[32m+[m[32mAPI_PORT=8000[m
+[32m+[m[32m# ⚠️ IMPORTANT: Generate a strong API key for production[m
+[32m+[m[32m# Example: openssl rand -hex 32[m
+[32m+[m[32mAGENT_API_KEY=supersecret-local-key[m
+[32m+[m
+[32m+[m[32m# ========================================[m
+[32m+[m[32m# 💬 FRONTEND CONFIGURATION[m
+[32m+[m[32m# ========================================[m
+[32m+[m[32mUI_PORT=3000[m
+[32m+[m[32mNEXT_PUBLIC_API_URL=http://localhost:8000[m
+[32m+[m[32mNODE_ENV=development[m
+[32m+[m[32m# For production: NODE_ENV=production[m
+[32m+[m
+[32m+[m[32m# ========================================[m
+[32m+[m[32m# 🔗 CONTROL PLANE (Optional)[m
+[32m+[m[32m# ========================================[m
+[32m+[m[32m# Leave commented out for local-only deployment[m
+[32m+[m[32m# AGNO_API_URL=https://os.agno.com/api[m
+[32m+[m[32m# AGNO_API_KEY=your-key-here[m
+[32m+[m
+[32m+[m[32m# ========================================[m
+[32m+[m[32m# 🔧 DEBUG & LOGGING (Optional)[m
+[32m+[m[32m# ========================================[m
+[32m+[m[32mDEBUG=false[m
+[32m+[m[32mLOG_LEVEL=info[m
+[32m+[m[32m# Set to 'debug' for verbose logging during development[m
+\ No newline at end of file[m

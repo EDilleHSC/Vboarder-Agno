@@ -1,3 +1,4 @@
+
 services:
   # 🧠 Database: PostgreSQL + pgvector
   pgvector:
@@ -5,19 +6,33 @@ services:
     container_name: pgvector
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ai
-      POSTGRES_PASSWORD: ai
-      POSTGRES_DB: ai
+      POSTGRES_USER: ${DB_USER:-ai}
+      POSTGRES_PASSWORD: ${DB_PASS:-change-me-in-production}
+      POSTGRES_DB: ${DB_DATABASE:-ai}
+      POSTGRES_INITDB_ARGS: "-c shared_preload_libraries=pgvector"
     ports:
-      - '5432:5432'
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgvolume:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ai']
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ai}"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "1"
+          memory: 1G
+    networks:
+      - vboarder-network
+    labels:
+      service: "database"
+      component: "pgvector"
 
   # 🤖 Ollama (GPU-accelerated LLM engine)
   ollama:
@@ -25,33 +40,44 @@ services:
     container_name: vboarder_ollama
     restart: unless-stopped
     ports:
-      - '11434:11434'
+      - "${OLLAMA_PORT:-11434}:11434"
     environment:
-      OLLAMA_HOST: '0.0.0.0'
-      OLLAMA_KEEP_ALIVE: '4h'
-      OLLAMA_NUM_PARALLEL: '1'
-      OLLAMA_NUM_CTX: '4096'
+      OLLAMA_HOST: "0.0.0.0:11434"
+      OLLAMA_KEEP_ALIVE: "${OLLAMA_KEEP_ALIVE:-4h}"
+      OLLAMA_NUM_PARALLEL: "${OLLAMA_NUM_PARALLEL:-2}"
+      OLLAMA_NUM_CTX: "${OLLAMA_NUM_CTX:-4096}"
+      OLLAMA_NUM_THREADS: "${OLLAMA_NUM_THREADS:-4}"
     volumes:
-      - /mnt/d/ai/models/ollama:/root/.ollama
+      - ollama_models:/root/.ollama
     healthcheck:
-      test: ['CMD', 'ollama', 'list']
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 20s
+      start_period: 30s
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
-              capabilities: ['gpu']
+              device_ids: ["0"]
+              capabilities: ["gpu"]
+        limits:
+          cpus: "4"
+          memory: 8G
+    networks:
+      - vboarder-network
+    labels:
+      service: "inference"
+      component: "ollama"
 
-  # 🚀 vBoarder-Agno API (FastAPI backend)
+  # 🚀 VBoarder-Agno API (FastAPI backend)
   vboarder-agno-api:
     build:
       context: ./app
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
     container_name: vboarder-agno-api
     restart: unless-stopped
     depends_on:
@@ -59,46 +85,85 @@ services:
         condition: service_healthy
       ollama:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
-      DB_CONNECTION_URL: postgresql://ai:ai@pgvector:5432/ai
+      DB_HOST: pgvector
       OLLAMA_HOST: http://ollama:11434
-      # ---- Optional cloud control-plane connection ----
-      AGNO_API_KEY: '' # paste your key here to connect
-      AGNO_API_URL: 'https://os.agno.com/api'
-      # -------------------------------------------------
     ports:
-      - '8000:8000'
+      - "${API_PORT:-8000}:8000"
     command: >
-      uvicorn main:app
+      uvicorn app_optimized:app
       --host 0.0.0.0
       --port 8000
       --reload
+      --log-level info
     volumes:
       - ./app:/app
+      - /app/__pycache__
+      - /app/.pytest_cache
     healthcheck:
-      test: ['CMD-SHELL', 'curl -fsS http://localhost:8000/health || exit 1']
-      interval: 30s
-      timeout: 10s
+      # ✅ FIX: Include API key header in health check
+      test: ["CMD-SHELL", "curl -fsS -H 'X-API-Key: ${AGENT_API_KEY:-supersecret-local-key}' http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 5
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "1"
+          memory: 1G
+    networks:
+      - vboarder-network
+    labels:
+      service: "api"
+      component: "fastapi"
 
   # 💬 AgentUI (Next.js frontend)
   agent-ui:
     build:
       context: ./agent-ui
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
     container_name: agent-ui
     restart: unless-stopped
     depends_on:
-      - vboarder-agno-api
+      vboarder-agno-api:
+        condition: service_healthy
     environment:
-      NEXT_PUBLIC_API_URL: http://vboarder-agno-api:8000
-      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NODE_ENV: ${NODE_ENV:-development}
     ports:
-      - '3000:3000'
+      - "${UI_PORT:-3000}:3000"
     volumes:
       - ./agent-ui:/usr/src/app
+      - /usr/src/app/.next
       - /usr/src/app/node_modules
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    networks:
+      - vboarder-network
+    labels:
+      service: "frontend"
+      component: "nextjs"
+
+networks:
+  vboarder-network:
+    driver: bridge
 
 volumes:
   pgvolume:
+    driver: local
+  ollama_models:
+    driver: local
