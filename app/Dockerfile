@@ -15,4 +15,6 @@ COPY . .
 EXPOSE 8000
 
 # 🚀 Start FastAPI (hot reload for dev)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+

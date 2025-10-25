@@ -1,5 +1,5 @@
 services:
-  # 🧠 Postgres + pgvector
+  # 🧠 Database: PostgreSQL + pgvector
   pgvector:
     image: agnohq/pgvector:16
     container_name: pgvector
@@ -19,7 +19,7 @@ services:
       retries: 5
       start_period: 40s
 
-  # 🤖 Ollama (GPU accelerated)
+  # 🤖 Ollama (GPU-accelerated LLM engine)
   ollama:
     image: ollama/ollama:latest
     container_name: vboarder_ollama
@@ -47,7 +47,7 @@ services:
               count: 1
               capabilities: ['gpu']
 
-  # 🚀 vBoarder-Agno API
+  # 🚀 vBoarder-Agno API (FastAPI backend)
   vboarder-agno-api:
     build:
       context: ./app
@@ -62,6 +62,10 @@ services:
     environment:
       DB_CONNECTION_URL: postgresql://ai:ai@pgvector:5432/ai
       OLLAMA_HOST: http://ollama:11434
+      # ---- Optional cloud control-plane connection ----
+      AGNO_API_KEY: '' # paste your key here to connect
+      AGNO_API_URL: 'https://os.agno.com/api'
+      # -------------------------------------------------
     ports:
       - '8000:8000'
     command: >
@@ -69,12 +73,32 @@ services:
       --host 0.0.0.0
       --port 8000
       --reload
+    volumes:
+      - ./app:/app
     healthcheck:
       test: ['CMD-SHELL', 'curl -fsS http://localhost:8000/health || exit 1']
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 40s
+
+  # 💬 AgentUI (Next.js frontend)
+  agent-ui:
+    build:
+      context: ./agent-ui
+      dockerfile: Dockerfile
+    container_name: agent-ui
+    restart: unless-stopped
+    depends_on:
+      - vboarder-agno-api
+    environment:
+      NEXT_PUBLIC_API_URL: http://vboarder-agno-api:8000
+      NODE_ENV: development
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./agent-ui:/usr/src/app
+      - /usr/src/app/node_modules
 
 volumes:
   pgvolume:
