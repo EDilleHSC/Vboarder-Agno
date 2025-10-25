@@ -41,3 +41,9 @@ node_modules/
 pgvolume/
 .venv*/
 __pycache__/
+# Added automatically by cleanup script
+archive/
+node_modules/
+pgvolume/
+.venv*/
+__pycache__/
