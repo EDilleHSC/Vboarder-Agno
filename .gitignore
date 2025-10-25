@@ -35,3 +35,9 @@ __backup*/
 .vscode/
 .continue/
 archive/
+# Added automatically by cleanup script
+archive/
+node_modules/
+pgvolume/
+.venv*/
+__pycache__/
