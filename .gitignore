@@ -1,0 +1,36 @@
+# 🔒 Secrets
+.env
+.env.locked
+
+# 🧠 Python
+__pycache__/
+*.pyc
+*.pyo
+.venv*/
+venv*/
+*.egg-info/
+
+# 🪄 Node / Frontend
+node_modules/
+npm-debug.log*
+.next/
+dist/
+build/
+
+# 🧱 Docker
+pgvolume/
+*.tgz
+*.tar
+
+# 🧾 Logs / Reports
+logs/
+*.log
+*.md.backup
+*.tmp
+__backup*/
+
+# 🧩 Misc
+.DS_Store
+.idea/
+.vscode/
+.continue/
